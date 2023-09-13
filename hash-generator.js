@@ -24,13 +24,13 @@ function numberToWord(num) {
 }
 
 async function findSelfDescriptiveHash() {
-    const template = "The SHA256 for this sentence begins with: {} and {}.";
+    let template = document.getElementById("sentenceStructure").value;
     
     for (let i = 0; i < 16*16; i++) {
         const firstChar = i.toString(16).charAt(0);
         const secondChar = i.toString(16).charAt(1);
 
-        const sentence = template.replace("{}", numberToWord(firstChar)).replace("{}", numberToWord(secondChar));
+        const sentence = template.replace("{{}}", numberToWord(firstChar)).replace("{{}}", numberToWord(secondChar));
         const hashResult = await sha256(sentence);
 
         if (hashResult.startsWith(firstChar + secondChar)) {
