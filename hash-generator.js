@@ -1,43 +1,65 @@
 async function sha256(message) {
+    // Encode as UTF-8
     const msgBuffer = new TextEncoder('utf-8').encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function numberToWord(num) {
-    switch (num) {
-        case '0': return "zero";
-        case '1': return "one";
-        case '2': return "two";
-        case '3': return "three";
-        case '4': return "four";
-        case '5': return "five";
-        case '6': return "six";
-        case '7': return "seven";
-        case '8': return "eight";
-        case '9': return "nine";
-        case 'a': return "a";
-        case 'b': return "b";
-        // ... add other cases as needed
-    }
-}
-
-async function findSelfDescriptiveHash() {
-    let template = document.getElementById("sentenceStructure").value;
     
-    for (let i = 0; i < 16*16; i++) {
-        const firstChar = i.toString(16).charAt(0);
-        const secondChar = i.toString(16).charAt(1);
+    // Hash the message
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
 
-        const sentence = template.replace("{{}}", numberToWord(firstChar)).replace("{{}}", numberToWord(secondChar));
-        const hashResult = await sha256(sentence);
+    // Convert ArrayBuffer to Array
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
 
-        if (hashResult.startsWith(firstChar + secondChar)) {
-            document.getElementById("result").innerText = `Found a matching sentence: ${sentence}\nHash: ${hashResult}`;
-            return;
-        }
-    }
-
-    document.getElementById("result").innerText = 'No matching sentence found.';
+    // Convert bytes to hex string
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
 }
+
+const hexToWord = {
+    '0': 'zero',
+    '1': 'one',
+    '2': 'two',
+    '3': 'three',
+    '4': 'four',
+    '5': 'five',
+    '6': 'six',
+    '7': 'seven',
+    '8': 'eight',
+    '9': 'nine',
+    'a': 'a',
+    'b': 'bee',
+    'c': 'see',
+    'd': 'dee',
+    'e': 'e',
+    'f': 'eff'
+};
+
+function replacePlaceholders(sentence, hash) {
+    let currentHashIndex = 0;
+    while (sentence.includes("{{}}") && currentHashIndex < hash.length) {
+        sentence = sentence.replace("{{}}", hexToWord[hash[currentHashIndex]]);
+        currentHashIndex++;
+    }
+    return sentence;
+}
+
+async function findMatchingSentence() {
+    const baseSentence = document.getElementById("baseSentence").value;
+    let counter = 0;
+    const MAX_ITERATIONS = 100000;  // For demonstration purposes
+    
+    try {
+        for (let i = 0; i < MAX_ITERATIONS; i++) {
+            const currentSentence = replacePlaceholders(baseSentence, await sha256(baseSentence.replace("{{}}", i.toString())));
+            const currentHash = await sha256(currentSentence);
+            if (currentSentence.includes("{{}}") === false && currentHash.startsWith(currentSentence.match(/: (\w+),/)[1])) {
+                document.getElementById("result").innerText = `Found a matching sentence: ${currentSentence}\nHash: ${currentHash}`;
+                return;
+            }
+        }
+        document.getElementById("result").innerText = 'No matching sentence found.';
+    } catch (err) {
+        console.error(err);
+        document.getElementById("result").innerText = 'An error occurred.';
+    }
+}
+
+document.getElementById("findButton").addEventListener("click", findMatchingSentence);
