@@ -6,17 +6,15 @@
     <title>Self-descriptive SHA-256 Finder</title>
 </head>
 <body>
-    <h1>Self-descriptive SHA-256 Finder</h1><br>
-    <h1>  </h1>
-    
+    <h1>Self-descriptive SHA-256 Finder</h1>
+
     <p>
-        Sentence Structure: 
-        <input type="text" id="sentenceStructure" value="The SHA256 for this sentence begins with: {{}} and {{}}."><br>
-        <h3>Script will replace all {{}} brackets with words corresponding to its position among the hash values, i think</h3>
+        Sentence Structure (max 30 characters): 
+        <input type="text" id="baseSentence" maxlength="30" placeholder="e.g. My hash starts with {{}}.">
     </p>
-    
-    <button onclick="findSelfDescriptiveHash()">Find Matching Sentence</button>
-    
+
+    <button id="findButton">Find Matching Sentence</button>
+
     <h2>Results:</h2>
     <p id="result"></p>
     

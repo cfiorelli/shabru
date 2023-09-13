@@ -42,24 +42,34 @@ function replacePlaceholders(sentence, hash) {
 }
 
 async function findMatchingSentence() {
-    const baseSentence = document.getElementById("baseSentence").value;
+    const sentenceTemplate = document.getElementById("sentenceTemplate").value;
     let counter = 0;
-    const MAX_ITERATIONS = 100000;  // For demonstration purposes
-    
-    try {
-        for (let i = 0; i < MAX_ITERATIONS; i++) {
-            const currentSentence = replacePlaceholders(baseSentence, await sha256(baseSentence.replace("{{}}", i.toString())));
-            const currentHash = await sha256(currentSentence);
-            if (currentSentence.includes("{{}}") === false && currentHash.startsWith(currentSentence.match(/: (\w+),/)[1])) {
-                document.getElementById("result").innerText = `Found a matching sentence: ${currentSentence}\nHash: ${currentHash}`;
+    let hashResult;
+
+    while (counter < 100000) { // Limit to prevent indefinite loop
+        const sentenceWithCounter = sentenceTemplate.replace(/{{counter}}/g, counter.toString());
+
+        hashResult = await sha256(sentenceWithCounter);
+        let bracketMatches = [...sentenceWithCounter.matchAll(/{{}}/g)];
+        if (bracketMatches.length <= hashResult.length) {
+            let isMatch = true;
+            let newSentence = sentenceWithCounter;
+            for (let i = 0; i < bracketMatches.length; i++) {
+                const word = hexToWord[hashResult[i]];
+                if (!word) {
+                    isMatch = false;
+                    break;
+                }
+                newSentence = newSentence.replace("{{}}", word);
+            }
+
+            if (isMatch) {
+                document.getElementById("result").innerText = `Found a matching sentence: ${newSentence}\nHash: ${hashResult}`;
                 return;
             }
         }
-        document.getElementById("result").innerText = 'No matching sentence found.';
-    } catch (err) {
-        console.error(err);
-        document.getElementById("result").innerText = 'An error occurred.';
-    }
-}
 
-document.getElementById("findButton").addEventListener("click", findMatchingSentence);
+        counter++;
+    }
+    document.getElementById("result").innerText = `No matching sentence found.`;
+}
